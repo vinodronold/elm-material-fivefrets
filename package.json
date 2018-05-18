@@ -1,0 +1,30 @@
+{
+  "name": "elm-material-fivefrets",
+  "version": "0.1.0",
+  "description": "Fivefrets with MDC",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "build-css":
+      "node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/",
+    "watch-css":
+      "npm run build-css && node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/ --watch --recursive",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinodronold/elm-material-fivefrets.git"
+  },
+  "author": "Vinod Ronold <vinodronoldbe@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vinodronold/elm-material-fivefrets/issues"
+  },
+  "homepage": "https://github.com/vinodronold/elm-material-fivefrets#readme",
+  "dependencies": {
+    "material-components-web": "^0.35.1",
+    "node-sass-chokidar": "^1.3.0"
+  }
+}
