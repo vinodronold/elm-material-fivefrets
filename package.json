@@ -11,7 +11,8 @@
       "node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/",
     "watch-css":
       "npm run build-css && node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/ --watch --recursive",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently \"npm run watch-css\" \"elm-app start\""
   },
   "repository": {
     "type": "git",
@@ -24,7 +25,10 @@
   },
   "homepage": "https://github.com/vinodronold/elm-material-fivefrets#readme",
   "dependencies": {
-    "material-components-web": "^0.35.1",
+    "material-components-web": "^0.35.1"
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.1",
     "node-sass-chokidar": "^1.3.0"
   }
 }
