@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, h1, img)
+import Html exposing (Html, text, div, h1, img, header, section, span, main_)
 import Dict
 import Navigation exposing (Location)
 import Window
@@ -9,6 +9,7 @@ import Task
 
 ---- APPS ----
 
+import Utils.MDCClass as MDCClass
 import Route exposing (Route)
 import Device exposing (Device)
 import Data.Songs as SongsData
@@ -116,36 +117,55 @@ pageSubscriptions { pageState } =
 
 view : Model -> Html Msg
 view model =
-    case model.pageState of
-        Loading ->
-            div []
-                [ text "Loading"
+    let
+        topBar =
+            header
+                [ MDCClass.classList [ MDCClass.topAppBar, MDCClass.topAppBarFixed, MDCClass.themeTextPrimaryOnBackground ] ]
+                [ div [ MDCClass.classList [ MDCClass.topAppBarRow, MDCClass.themeBackground ] ]
+                    [ section [ MDCClass.classList [ MDCClass.topAppBarSection ] ]
+                        [ span [ MDCClass.classList [ MDCClass.topAppBarTitle, MDCClass.brandClass "fivefrets" ] ]
+                            [ text "fivefrets" ]
+                        ]
+                    ]
                 ]
 
-        Loaded Errored ->
-            div []
-                [ text "Errored"
+        frame content =
+            div [ MDCClass.classList [ MDCClass.typography, MDCClass.brandClass "container" ] ]
+                [ topBar
+                , main_ [ MDCClass.classList [ MDCClass.topAppBarFixedAdjust ] ] [ content ]
                 ]
+    in
+        case model.pageState of
+            Loading ->
+                div []
+                    [ text "Loading"
+                    ]
 
-        Loaded Home ->
-            div []
-                [ text "Home"
-                ]
+            Loaded Errored ->
+                div []
+                    [ text "Errored"
+                    ]
 
-        Loaded Player ->
-            div []
-                [ text "Player"
-                ]
+            Loaded Home ->
+                frame <|
+                    div []
+                        [ text "Home"
+                        ]
 
-        Loaded Blank ->
-            div []
-                [ text "Blank"
-                ]
+            Loaded Player ->
+                div []
+                    [ text "Player"
+                    ]
 
-        Loaded NotFound ->
-            div []
-                [ text "NotFound"
-                ]
+            Loaded Blank ->
+                div []
+                    [ text "Blank"
+                    ]
+
+            Loaded NotFound ->
+                div []
+                    [ text "NotFound"
+                    ]
 
 
 setRoute : Maybe Route -> Model -> ( Model, Cmd Msg )

@@ -1,16 +1,21 @@
-body {
-  font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande',
-    'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
-  margin: 0;
-  text-align: center;
-  color: #293c4b;
+$mdc-theme-primary: #1eb980;
+$mdc-theme-secondary: #ff6859;
+$mdc-theme-background: #33333d;
+$mdc-theme-surface: #373740;
+@import '@material/theme/mdc-theme';
+@import '@material/typography/mdc-typography';
+@import '@material/top-app-bar/mdc-top-app-bar';
+.container {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
 }
 
-h1 {
-  font-size: 30px;
-}
-
-img {
-  margin: 20px 0;
-  max-width: 200px;
+.fivefrets {
+    // @include mdc-typography('headline4');
+    font-weight: 300;
+    letter-spacing: 4px;
+    font-feature-settings: 'liga' 0;
+    width: 100%;
+    text-align: center;
 }

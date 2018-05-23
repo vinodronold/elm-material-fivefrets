@@ -12,7 +12,8 @@
     "watch-css":
       "npm run build-css && node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/ --watch --recursive",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently \"npm run watch-css\" \"elm-app start\""
+    "start":
+      "concurrently --kill-others \"npm run watch-css\" \"elm-app start\""
   },
   "repository": {
     "type": "git",
