@@ -2,11 +2,32 @@ module Utils.MDCClass
     exposing
         ( brandClass
         , classList
+        , elevate
+        , elevationTransition
+        , linearProgress
+        , linearProgressBar
+        , linearProgressIndeterminate
+        , linearProgressBarInner
+        , linearProgressBuffer
+        , linearProgressBufferingDots
+        , linearProgressPrimaryBar
+        , linearProgressSecondaryBar
+        , list
+        , listItem
+        , listAvatarList
+        , listItemGraphic
+        , listItemText
         , theme
+        , themePrimary
+        , themeSecondary
         , themeBackground
+        , themeSurface
+        , themePrimaryBG
+        , themeSecondaryBG
         , themeTextPrimaryOnBackground
         , topAppBar
         , topAppBarFixed
+        , topAppBarFixedScrolled
         , topAppBarFixedAdjust
         , topAppBarRow
         , topAppBarSection
@@ -61,6 +82,113 @@ formClass cls str =
 
 
 
+---- ELEVATION ----
+
+
+elevation : Class
+elevation =
+    MDCClass "mdc-elevation"
+
+
+formElevationClass : String -> Class
+formElevationClass =
+    formClass elevation
+
+
+elevate : Int -> Class
+elevate z =
+    formElevationClass <| "-z" ++ toString z
+
+
+elevationTransition : Class
+elevationTransition =
+    formElevationClass "-transition"
+
+
+
+---- LINEAR PROGRESS ----
+
+
+linearProgress : Class
+linearProgress =
+    MDCClass "mdc-linear-progress"
+
+
+formlinearProgressClass : String -> Class
+formlinearProgressClass =
+    formClass linearProgress
+
+
+linearProgressIndeterminate : Class
+linearProgressIndeterminate =
+    formlinearProgressClass "--indeterminate"
+
+
+linearProgressBufferingDots : Class
+linearProgressBufferingDots =
+    formlinearProgressClass "__buffering-dots"
+
+
+linearProgressBuffer : Class
+linearProgressBuffer =
+    formlinearProgressClass "__buffer"
+
+
+linearProgressBar : Class
+linearProgressBar =
+    formlinearProgressClass "__bar"
+
+
+linearProgressPrimaryBar : Class
+linearProgressPrimaryBar =
+    formlinearProgressClass "__primary-bar"
+
+
+linearProgressSecondaryBar : Class
+linearProgressSecondaryBar =
+    formlinearProgressClass "__secondary-bar"
+
+
+linearProgressBarInner : Class
+linearProgressBarInner =
+    formlinearProgressClass "__bar-inner"
+
+
+
+---- LIST ----
+
+
+list : Class
+list =
+    MDCClass "mdc-list"
+
+
+formListClass : String -> Class
+formListClass =
+    formClass list
+
+
+listItem : Class
+listItem =
+    formListClass "-item"
+
+
+listAvatarList : Class
+listAvatarList =
+    formListClass "-avatar-list"
+
+
+listItemGraphic : Class
+listItemGraphic =
+    formListClass "-item__graphic"
+
+
+listItemText : Class
+listItemText =
+    formListClass "-item__text"
+
+
+
 ---- THEMES ----
 
 
@@ -74,9 +202,34 @@ formThemeClass =
     formClass theme
 
 
+themePrimary : Class
+themePrimary =
+    formThemeClass "--primary"
+
+
+themeSecondary : Class
+themeSecondary =
+    formThemeClass "--secondary"
+
+
 themeBackground : Class
 themeBackground =
     formThemeClass "--background"
+
+
+themeSurface : Class
+themeSurface =
+    formThemeClass "--surface"
+
+
+themePrimaryBG : Class
+themePrimaryBG =
+    formThemeClass "--primary-bg"
+
+
+themeSecondaryBG : Class
+themeSecondaryBG =
+    formThemeClass "--secondary-bg"
 
 
 themeTextPrimaryOnBackground : Class
@@ -101,6 +254,11 @@ formTopAppBarClass =
 topAppBarFixed : Class
 topAppBarFixed =
     formTopAppBarClass "--fixed"
+
+
+topAppBarFixedScrolled : Class
+topAppBarFixedScrolled =
+    formTopAppBarClass "--fixed-scrolled"
 
 
 topAppBarFixedAdjust : Class

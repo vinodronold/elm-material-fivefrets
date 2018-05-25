@@ -1,6 +1,8 @@
 module Main exposing (..)
 
 import Html exposing (Html, text, div, h1, img, header, section, span, main_)
+import Html.Attributes exposing (attribute)
+import Http
 import Dict
 import Navigation exposing (Location)
 import Window
@@ -9,11 +11,13 @@ import Task
 
 ---- APPS ----
 
+import Pages.Home as Home
 import Utils.MDCClass as MDCClass
 import Route exposing (Route)
 import Device exposing (Device)
 import Data.Songs as SongsData
 import Ports
+import Views
 
 
 ---- PAGE ----
@@ -63,6 +67,7 @@ type Msg
     | WindowResize Window.Size
     | PortMsg Ports.JSDataIn
     | PortErr String
+    | HomeLoaded (Result Http.Error SongsData.Songs)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -82,6 +87,13 @@ updatePage page msg model =
 
         ( WindowResize size, _ ) ->
             { model | device = Device.classifyDevice size } ! []
+
+        ( HomeLoaded (Ok songs), _ ) ->
+            { model | pageState = Loaded Home, songs = Dict.union songs model.songs } ! []
+
+        ( HomeLoaded (Err errMessage), _ ) ->
+            -- { model | pageState = Loaded (Errored <| Errored.pageLoadError <| toString errMessage) } ! []
+            { model | pageState = Loaded Errored } ! []
 
         ( _, Loaded NotFound ) ->
             -- Disregard incoming messages when we're on the
@@ -117,55 +129,33 @@ pageSubscriptions { pageState } =
 
 view : Model -> Html Msg
 view model =
-    let
-        topBar =
-            header
-                [ MDCClass.classList [ MDCClass.topAppBar, MDCClass.topAppBarFixed, MDCClass.themeTextPrimaryOnBackground ] ]
-                [ div [ MDCClass.classList [ MDCClass.topAppBarRow, MDCClass.themeBackground ] ]
-                    [ section [ MDCClass.classList [ MDCClass.topAppBarSection ] ]
-                        [ span [ MDCClass.classList [ MDCClass.topAppBarTitle, MDCClass.brandClass "fivefrets" ] ]
-                            [ text "fivefrets" ]
-                        ]
-                    ]
+    case model.pageState of
+        Loading ->
+            Views.frame <| Views.loading
+
+        Loaded Errored ->
+            div []
+                [ text "Errored"
                 ]
 
-        frame content =
-            div [ MDCClass.classList [ MDCClass.typography, MDCClass.brandClass "container" ] ]
-                [ topBar
-                , main_ [ MDCClass.classList [ MDCClass.topAppBarFixedAdjust ] ] [ content ]
+        Loaded Home ->
+            Views.frame <|
+                Home.view model.songs
+
+        Loaded Player ->
+            div []
+                [ text "Player"
                 ]
-    in
-        case model.pageState of
-            Loading ->
-                div []
-                    [ text "Loading"
-                    ]
 
-            Loaded Errored ->
-                div []
-                    [ text "Errored"
-                    ]
+        Loaded Blank ->
+            div []
+                [ text "Blank"
+                ]
 
-            Loaded Home ->
-                frame <|
-                    div []
-                        [ text "Home"
-                        ]
-
-            Loaded Player ->
-                div []
-                    [ text "Player"
-                    ]
-
-            Loaded Blank ->
-                div []
-                    [ text "Blank"
-                    ]
-
-            Loaded NotFound ->
-                div []
-                    [ text "NotFound"
-                    ]
+        Loaded NotFound ->
+            div []
+                [ text "NotFound"
+                ]
 
 
 setRoute : Maybe Route -> Model -> ( Model, Cmd Msg )
@@ -178,7 +168,15 @@ setRoute maybeRoute model =
             model ! [ Route.modifyUrl Route.Home ]
 
         Just Route.Home ->
-            { model | pageState = Loaded Home } ! []
+            let
+                ( pageState, cmd ) =
+                    if (Dict.isEmpty model.songs) then
+                        ( Loading, Task.attempt HomeLoaded Home.load )
+                    else
+                        ( Loaded Home, Cmd.none )
+            in
+                { model | navOpen = False, pageState = pageState }
+                    ! [ cmd ]
 
         Just (Route.Player youTubeID) ->
             { model | pageState = Loaded Player } ! []

@@ -5,10 +5,23 @@ $mdc-theme-surface: #373740;
 @import '@material/theme/mdc-theme';
 @import '@material/typography/mdc-typography';
 @import '@material/top-app-bar/mdc-top-app-bar';
+@import '@material/linear-progress/mdc-linear-progress';
+@import '@material/list/mdc-list';
+@import '@material/elevation/mdc-elevation';
+@import '@material/elevation/mixins';
+body {
+    color: mdc-theme-accessible-ink-color($mdc-theme-background);
+    background-color: $mdc-theme-background;
+}
+
 .container {
     display: flex;
     flex-flow: column;
     height: 100%;
+}
+
+.header {
+    z-index: 99;
 }
 
 .fivefrets {
@@ -18,4 +31,39 @@ $mdc-theme-surface: #373740;
     font-feature-settings: 'liga' 0;
     width: 100%;
     text-align: center;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+}
+
+.loader {
+    width: 80%;
+}
+
+.song {
+    height: auto;
+    margin: 10px 0;
+    cursor: pointer;
+    @include mdc-elevation(1);
+    &:hover {
+        @include mdc-elevation(8);
+    }
+}
+
+.youtube-image {
+    width: auto;
+    height: auto;
+    transform: scale(0.75);
 }
