@@ -89,7 +89,8 @@ updatePage page msg model =
             { model | device = Device.classifyDevice size } ! []
 
         ( HomeLoaded (Ok songs), _ ) ->
-            { model | pageState = Loaded Home, songs = Dict.union songs model.songs } ! []
+            { model | pageState = Loaded Home, songs = Dict.union songs model.songs }
+                ! [ Ports.pushDataToJS Ports.HomePageLoaded ]
 
         ( HomeLoaded (Err errMessage), _ ) ->
             -- { model | pageState = Loaded (Errored <| Errored.pageLoadError <| toString errMessage) } ! []
@@ -143,9 +144,7 @@ view model =
                 Home.view model.songs
 
         Loaded Player ->
-            div []
-                [ text "Player"
-                ]
+            Views.frame <| Views.loading
 
         Loaded Blank ->
             div []

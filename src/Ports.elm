@@ -1,7 +1,6 @@
 port module Ports exposing (..)
 
 import Data.Player as Player
-import Data.Songs as Song
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Types
@@ -11,6 +10,9 @@ import Time exposing (Time)
 pushDataToJS : ElmDataOut -> Cmd msg
 pushDataToJS data =
     case data of
+        HomePageLoaded ->
+            elmData { tag = "HomePageLoaded", data = Encode.null }
+
         LoadYouTubeVideo playerID youTubeID ->
             elmData
                 { tag = "LoadYouTubeVideo"
@@ -82,7 +84,8 @@ type JSDataIn
 
 
 type ElmDataOut
-    = LoadYouTubeVideo Player.YTPlayerID Types.YouTubeID
+    = HomePageLoaded
+    | LoadYouTubeVideo Player.YTPlayerID Types.YouTubeID
     | SetPlayerState Player.PlayerStatus
     | GetPlayerCurrTime
     | SeekTo Time

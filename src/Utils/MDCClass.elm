@@ -33,6 +33,10 @@ module Utils.MDCClass
         , topAppBarSection
         , topAppBarTitle
         , typography
+        , typographySubtitle1
+        , typographySubtitle2
+        , typographyBody1
+        , typographyBody2
         )
 
 import Html
@@ -288,3 +292,28 @@ topAppBarTitle =
 typography : Class
 typography =
     MDCClass "mdc-typography"
+
+
+formTypographyClass : String -> Class
+formTypographyClass =
+    formClass typography
+
+
+typographySubtitle1 : Class
+typographySubtitle1 =
+    formTypographyClass "--subtitle1"
+
+
+typographySubtitle2 : Class
+typographySubtitle2 =
+    formTypographyClass "--subtitle2"
+
+
+typographyBody1 : Class
+typographyBody1 =
+    formTypographyClass "--body1"
+
+
+typographyBody2 : Class
+typographyBody2 =
+    formTypographyClass "--body2"
