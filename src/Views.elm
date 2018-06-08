@@ -20,9 +20,13 @@ topBar =
             , MDCClass.brandClass "header"
             ]
         ]
-        [ div [ MDCClass.classList [ MDCClass.topAppBarRow, MDCClass.themeBackground ] ]
+        [ div
+            [ MDCClass.classList [ MDCClass.topAppBarRow ] ]
             [ section [ MDCClass.classList [ MDCClass.topAppBarSection ] ]
-                [ span [ MDCClass.classList [ MDCClass.topAppBarTitle, MDCClass.brandClass "fivefrets" ] ]
+                [ a
+                    [ href (Route.href <| Route.Home)
+                    , MDCClass.classList [ MDCClass.topAppBarTitle, MDCClass.brandClass "fivefrets" ]
+                    ]
                     [ text "fivefrets" ]
                 ]
             ]

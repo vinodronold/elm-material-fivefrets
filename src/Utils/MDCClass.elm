@@ -2,6 +2,12 @@ module Utils.MDCClass
     exposing
         ( brandClass
         , classList
+        , button
+        , buttonDensed
+        , buttonUnElevated
+        , buttonRaised
+        , buttonIcon
+        , icons
         , elevate
         , elevationTransition
         , linearProgress
@@ -33,10 +39,12 @@ module Utils.MDCClass
         , topAppBarSection
         , topAppBarTitle
         , typography
+        , typographyHeader3
         , typographySubtitle1
         , typographySubtitle2
         , typographyBody1
         , typographyBody2
+        , typographyCaption
         )
 
 import Html
@@ -83,6 +91,45 @@ formClass cls str =
 
         BrandClass s ->
             BrandClass <| s ++ str
+
+
+
+---- BUTTONS ----
+
+
+button : Class
+button =
+    MDCClass "mdc-button"
+
+
+formButtonClass : String -> Class
+formButtonClass =
+    formClass button
+
+
+buttonRaised : Class
+buttonRaised =
+    formButtonClass "--raised"
+
+
+buttonUnElevated : Class
+buttonUnElevated =
+    formButtonClass "--unelevated"
+
+
+buttonDensed : Class
+buttonDensed =
+    formButtonClass "--densed"
+
+
+buttonIcon : Class
+buttonIcon =
+    formButtonClass "__icon"
+
+
+icons : Class
+icons =
+    MDCClass "material-icons"
 
 
 
@@ -299,6 +346,11 @@ formTypographyClass =
     formClass typography
 
 
+typographyHeader3 : Class
+typographyHeader3 =
+    formTypographyClass "--headline6"
+
+
 typographySubtitle1 : Class
 typographySubtitle1 =
     formTypographyClass "--subtitle1"
@@ -317,3 +369,8 @@ typographyBody1 =
 typographyBody2 : Class
 typographyBody2 =
     formTypographyClass "--body2"
+
+
+typographyCaption : Class
+typographyCaption =
+    formTypographyClass "--caption"

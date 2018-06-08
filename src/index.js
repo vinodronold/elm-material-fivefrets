@@ -11,22 +11,16 @@ var jsPlayer, jsPlayerID, jsPlayerVideoID, jsPlayerListerner
 
 app.ports.elmData.subscribe(({ tag, data }) => {
   switch (tag) {
-    case 'HomePageLoaded':
+    case 'PageLoaded':
       destroyRipple()
       setRipple()
       break
 
-    case 'LoadYouTubeVideo':
-      console.log('LoadYouTubeVideo', data)
-      var tag = document.createElement('script')
-      tag.src = 'https://www.youtube.com/iframe_api'
-      var firstScriptTag = document.getElementsByTagName('script')[0]
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
-      window.onYouTubeIframeAPIReady = getYouTubeIframeAPIReady(
-        data.playerID,
-        data.youTubeID
-      )
-
+    case 'PlayerLoaded':
+      console.log('PlayerLoaded', data)
+      destroyRipple()
+      setRipple()
+      loadYouTubeVideo(data)
       break
 
     case 'PlayVideo':
@@ -60,13 +54,37 @@ app.ports.elmData.subscribe(({ tag, data }) => {
   }
 })
 
+const loadYouTubeVideo = ({ playerID, youTubeID }) => {
+  var scripts = document.getElementsByTagName('script')
+  var ytIframePresent = false
+  Array.from(scripts).forEach(script => {
+    if (script.src === 'https://www.youtube.com/iframe_api') {
+      ytIframePresent = true
+      return
+    }
+  })
+
+  if (!ytIframePresent) {
+    var tag = document.createElement('script')
+    tag.src = 'https://www.youtube.com/iframe_api'
+    var firstScriptTag = document.getElementsByTagName('script')[0]
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
+  }
+
+  window.onYouTubeIframeAPIReady = getYouTubeIframeAPIReady(playerID, youTubeID)
+  if (jsPlayer) {
+    jsPlayer.destroy()
+    window.onYouTubeIframeAPIReady()
+  }
+}
+
 const getYouTubeIframeAPIReady = (jsPlayerID, jsPlayerVideoID) => () => {
   jsPlayer = new YT.Player(jsPlayerID, {
     height: 'auto',
     width: 'auto',
     videoId: jsPlayerVideoID,
     playerVars: {
-      autoplay: 1,
+      autoplay: 0,
       controls: 0,
       fs: 0,
       iv_load_policy: 3,
@@ -82,7 +100,6 @@ const getYouTubeIframeAPIReady = (jsPlayerID, jsPlayerVideoID) => () => {
 }
 
 const onPlayerStateChange = e => {
-  console.log('State: ' + ' (' + e.data + ').')
   app.ports.jsData.send({ tag: 'JSPlayerStatus', data: e.data })
 }
 

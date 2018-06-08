@@ -3,6 +3,7 @@ module Data.Songs
         ( Songs
         , Song
         , getSongs
+        , getSongChords
         )
 
 import Dict exposing (Dict)
@@ -11,6 +12,7 @@ import Types
 import Config
 import Http
 import Json.Decode as Decode
+import Data.ChordTime exposing (decodeChordTimeList)
 
 
 type alias Songs =
@@ -59,3 +61,25 @@ decodeSong =
         (Decode.at [ "imgUrlDefault" ] Types.decodeUrl)
         (Decode.at [ "imgUrlMedium" ] Types.decodeUrl)
         (Decode.succeed Nothing)
+
+
+getSongChords : Types.YouTubeID -> Http.Request Song
+getSongChords youTubeID =
+    let
+        requestUrl =
+            (Types.urlToString Config.apiUrl) ++ "/song/chords/" ++ Types.youTubeIDtoString youTubeID
+
+        request =
+            Http.get requestUrl decodeSongChords
+    in
+        request
+
+
+decodeSongChords : Decode.Decoder Song
+decodeSongChords =
+    Decode.map5 Song
+        (Decode.at [ "youtube_id" ] Types.decodeYouTubeID)
+        (Decode.at [ "title" ] Decode.string)
+        (Decode.at [ "imgUrlDefault" ] Types.decodeUrl)
+        (Decode.at [ "imgUrlMedium" ] Types.decodeUrl)
+        (Decode.at [ "chords" ] (Decode.maybe decodeChordTimeList))

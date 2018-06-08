@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import Json.Decode as Decode
 import UrlParser as Url
+import List.Extra exposing ((!!))
 
 
 ---------------------------------------------------------------------------------------------------
@@ -48,6 +49,63 @@ decodeUrl =
 ---------------------------------------------------------------------------------------------------
 
 
+type PlayerStatus
+    = NotLoaded
+    | UnStarted
+    | Ended
+    | Playing
+    | Paused
+    | Buffering
+    | Cued
+
+
+toPlayerStatus : Int -> PlayerStatus
+toPlayerStatus i =
+    case i of
+        (-1) ->
+            UnStarted
+
+        0 ->
+            Ended
+
+        1 ->
+            Playing
+
+        2 ->
+            Paused
+
+        3 ->
+            Buffering
+
+        5 ->
+            Cued
+
+        _ ->
+            NotLoaded
+
+
+
+---------------------------------------------------------------------------------------------------
+
+
+type YTPlayerID
+    = YTPlayerID String
+
+
+ytPlayerIDToString : YTPlayerID -> String
+ytPlayerIDToString (YTPlayerID s) =
+    s
+
+
+ytPlayerID : YTPlayerID
+ytPlayerID =
+    YTPlayerID "YTPlayerID"
+
+
+
+---------------------------------------------------------------------------------------------------
+
+
 type Chord
     = Chord Note Quality
     | NoChord
@@ -85,57 +143,101 @@ type Note
 
 noteToString : Note -> String
 noteToString note =
+    let
+        noteStr =
+            Basics.toString note
+    in
+        if noteStr |> String.endsWith "f" then
+            (noteStr |> String.dropRight 1) ++ "b"
+        else if noteStr |> String.endsWith "s" then
+            (noteStr |> String.dropRight 1) ++ "#"
+        else
+            noteStr
+
+
+notes : List Note
+notes =
+    [ A, Bf, B, C, Cs, D, Ds, E, F, Fs, G, Gs ]
+
+
+noteToIndex : Note -> Int
+noteToIndex note =
     case note of
         A ->
-            "A"
+            0
 
         As ->
-            "A#"
+            1
 
         Bf ->
-            "Bb"
+            1
 
         B ->
-            "B"
+            2
 
         C ->
-            "C"
+            3
 
         Cs ->
-            "C#"
+            4
 
         Df ->
-            "Db"
+            4
 
         D ->
-            "D"
+            5
 
         Ds ->
-            "D#"
+            6
 
         Ef ->
-            "Eb"
+            6
 
         E ->
-            "E"
+            7
 
         F ->
-            "F"
+            8
 
         Fs ->
-            "F#"
+            9
 
         Gf ->
-            "Gb"
+            9
 
         G ->
-            "G"
+            10
 
         Gs ->
-            "G#"
+            11
 
         Af ->
-            "Ab"
+            11
+
+
+type alias Transpose =
+    Int
+
+
+type alias Capo =
+    Int
+
+
+transformChord : Transpose -> Capo -> Chord -> Chord
+transformChord xpose capo chord =
+    case chord of
+        NoChord ->
+            NoChord
+
+        Chord note quality ->
+            let
+                idx =
+                    ((noteToIndex note) + (xpose - capo)) % 12
+
+                transposedNote =
+                    Maybe.withDefault note <| notes !! idx
+            in
+                Chord transposedNote quality
 
 
 

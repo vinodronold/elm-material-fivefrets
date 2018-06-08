@@ -1,4 +1,4 @@
-module Data.ChordTime exposing (ChordTime, getTime, getChords)
+module Data.ChordTime exposing (ChordTime, getTime, getChords, decodeChordTimeList)
 
 import Time exposing (Time)
 import Types

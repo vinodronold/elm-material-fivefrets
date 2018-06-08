@@ -1,23 +1,24 @@
 module Main exposing (..)
 
 import Html exposing (Html, text, div, h1, img, header, section, span, main_)
-import Html.Attributes exposing (attribute)
 import Http
 import Dict
 import Navigation exposing (Location)
-import Window
 import Task
 
 
 ---- APPS ----
 
 import Pages.Home as Home
-import Utils.MDCClass as MDCClass
+import Pages.Player as Player
+import Pages.Errored as Errored
 import Route exposing (Route)
 import Device exposing (Device)
 import Data.Songs as SongsData
+import Data.ChordTime exposing (ChordTime)
 import Ports
 import Views
+import Types
 
 
 ---- PAGE ----
@@ -26,9 +27,9 @@ import Views
 type Page
     = Blank
     | NotFound
-    | Errored
+    | Errored Errored.PageLoadError
     | Home
-    | Player
+    | Player Player.Model
 
 
 type PageState
@@ -42,7 +43,7 @@ type PageState
 
 type alias Model =
     { navOpen : Bool
-    , device : Device
+    , homeLoaded : Bool
     , songs : SongsData.Songs
     , pageState : PageState
     }
@@ -52,7 +53,7 @@ init : Location -> ( Model, Cmd Msg )
 init location =
     setRoute (Route.fromLocation location)
         { navOpen = False
-        , device = Device.classifyDevice <| Window.Size 0 0
+        , homeLoaded = False
         , songs = Dict.empty
         , pageState = Loading
         }
@@ -64,10 +65,12 @@ init location =
 
 type Msg
     = SetRoute (Maybe Route)
-    | WindowResize Window.Size
     | PortMsg Ports.JSDataIn
     | PortErr String
     | HomeLoaded (Result Http.Error SongsData.Songs)
+    | PlayerChordsLoaded Types.YouTubeID (Result Http.Error (List ChordTime))
+    | PlayerSongChordsLoaded Types.YouTubeID (Result Http.Error SongsData.Song)
+    | PlayerMsg Player.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -83,18 +86,88 @@ updatePage page msg model =
                 ( newModel, newCmd ) =
                     setRoute route model
             in
-                newModel ! [ Task.perform WindowResize Window.size, newCmd ]
-
-        ( WindowResize size, _ ) ->
-            { model | device = Device.classifyDevice size } ! []
+                newModel ! [ newCmd ]
 
         ( HomeLoaded (Ok songs), _ ) ->
             { model | pageState = Loaded Home, songs = Dict.union songs model.songs }
-                ! [ Ports.pushDataToJS Ports.HomePageLoaded ]
+                ! [ Ports.pushDataToJS Ports.HomeLoaded ]
 
         ( HomeLoaded (Err errMessage), _ ) ->
             -- { model | pageState = Loaded (Errored <| Errored.pageLoadError <| toString errMessage) } ! []
-            { model | pageState = Loaded Errored } ! []
+            { model | pageState = Loaded (Errored <| Errored.pageLoadError <| toString errMessage) } ! []
+
+        ( PlayerChordsLoaded youTubeID (Ok chordtimes), _ ) ->
+            let
+                song =
+                    Dict.get (Types.youTubeIDtoString youTubeID) model.songs
+
+                ( pageState, songs ) =
+                    case song of
+                        Nothing ->
+                            ( Loaded (Errored <| Errored.pageLoadError "Sorry. Unable to find the Song, please refresh the page.")
+                            , model.songs
+                            )
+
+                        Just s ->
+                            let
+                                songUpdated =
+                                    { s | chords = Just chordtimes }
+                            in
+                                ( Loaded (Player <| Player.init songUpdated)
+                                , Dict.insert (Types.youTubeIDtoString youTubeID) songUpdated model.songs
+                                )
+            in
+                { model | pageState = pageState, songs = songs }
+                    ! [ Ports.pushDataToJS <| Ports.PlayerLoaded Types.ytPlayerID youTubeID
+                      , Cmd.map PlayerMsg Player.getWindowSize
+                      ]
+
+        ( PlayerChordsLoaded youTubeID (Err errMessage), _ ) ->
+            { model | pageState = Loaded (Errored <| Errored.pageLoadError <| toString errMessage) }
+                ! []
+
+        ( PlayerSongChordsLoaded youTubeID (Ok song), _ ) ->
+            { model
+                | pageState = Loaded (Player <| Player.init song)
+                , songs = Dict.insert (Types.youTubeIDtoString youTubeID) song model.songs
+            }
+                ! [ Ports.pushDataToJS <| Ports.PlayerLoaded Types.ytPlayerID youTubeID
+                  , Cmd.map PlayerMsg Player.getWindowSize
+                  ]
+
+        ( PlayerSongChordsLoaded youTubeID (Err errMessage), _ ) ->
+            { model | pageState = Loaded (Errored <| Errored.pageLoadError <| toString errMessage) }
+                ! []
+
+        ( PlayerMsg playerMsg, Loaded (Player playerModel) ) ->
+            let
+                ( subModel, subCmd ) =
+                    Player.update playerMsg playerModel
+            in
+                { model | pageState = Loaded (Player subModel) } ! [ Cmd.map PlayerMsg subCmd ]
+
+        ( PortMsg jsDataIn, Loaded (Player playerModel) ) ->
+            case jsDataIn of
+                Ports.JSPlayerStatus jsPlayerStatus ->
+                    let
+                        ( subModel, subCmd ) =
+                            Player.update
+                                (Player.UpdatePlayerStatus <| Types.toPlayerStatus jsPlayerStatus)
+                                playerModel
+                    in
+                        { model | pageState = Loaded (Player subModel) } ! [ Cmd.map PlayerMsg subCmd ]
+
+                Ports.JSPlayerCurrTime currTime ->
+                    let
+                        ( subModel, subCmd ) =
+                            Player.update
+                                (Player.UpdatePlayerTime currTime)
+                                playerModel
+                    in
+                        { model | pageState = Loaded (Player subModel) } ! [ Cmd.map PlayerMsg subCmd ]
+
+        ( PortErr err, _ ) ->
+            model ! []
 
         ( _, Loaded NotFound ) ->
             -- Disregard incoming messages when we're on the
@@ -113,15 +186,23 @@ updatePage page msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Window.resizes WindowResize
-        , pageSubscriptions model
+        [ pageSubscriptions model
         , Ports.pullJSDataToElm PortMsg PortErr
         ]
 
 
 pageSubscriptions : { a | pageState : PageState } -> Sub Msg
 pageSubscriptions { pageState } =
-    Sub.none
+    case pageState of
+        Loaded (Player playerModel) ->
+            let
+                playerSub =
+                    Player.subscriptions playerModel
+            in
+                Sub.map PlayerMsg playerSub
+
+        _ ->
+            Sub.none
 
 
 
@@ -134,17 +215,15 @@ view model =
         Loading ->
             Views.frame <| Views.loading
 
-        Loaded Errored ->
-            div []
-                [ text "Errored"
-                ]
+        Loaded (Errored err) ->
+            Views.frame <| Errored.view err
 
         Loaded Home ->
             Views.frame <|
                 Home.view model.songs
 
-        Loaded Player ->
-            Views.frame <| Views.loading
+        Loaded (Player playerModel) ->
+            Views.frame <| Html.map PlayerMsg <| Player.view playerModel
 
         Loaded Blank ->
             div []
@@ -169,16 +248,40 @@ setRoute maybeRoute model =
         Just Route.Home ->
             let
                 ( pageState, cmd ) =
-                    if (Dict.isEmpty model.songs) then
+                    if not model.homeLoaded || (Dict.isEmpty model.songs) then
                         ( Loading, Task.attempt HomeLoaded Home.load )
                     else
                         ( Loaded Home, Cmd.none )
             in
-                { model | navOpen = False, pageState = pageState }
+                { model | navOpen = False, homeLoaded = True, pageState = pageState }
                     ! [ cmd ]
 
         Just (Route.Player youTubeID) ->
-            { model | pageState = Loaded Player } ! []
+            let
+                maybeSong =
+                    Dict.get (Types.youTubeIDtoString youTubeID) model.songs
+
+                ( pageState, cmd ) =
+                    case maybeSong of
+                        Nothing ->
+                            ( Loading
+                            , Task.attempt (PlayerSongChordsLoaded youTubeID) <| Player.loadWithSong youTubeID
+                            )
+
+                        Just song ->
+                            case song.chords of
+                                Nothing ->
+                                    ( Loaded (Player <| Player.init song)
+                                    , Task.attempt (PlayerChordsLoaded song.youtube_id) <| Player.load song.youtube_id
+                                    )
+
+                                Just _ ->
+                                    ( Loaded (Player <| Player.init song)
+                                    , Cmd.none
+                                    )
+            in
+                { model | navOpen = False, pageState = pageState }
+                    ! [ cmd, Cmd.map PlayerMsg Player.getWindowSize ]
 
 
 
