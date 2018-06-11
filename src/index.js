@@ -80,8 +80,8 @@ const loadYouTubeVideo = ({ playerID, youTubeID }) => {
 
 const getYouTubeIframeAPIReady = (jsPlayerID, jsPlayerVideoID) => () => {
   jsPlayer = new YT.Player(jsPlayerID, {
-    height: 'auto',
-    width: 'auto',
+    height: '90px',
+    width: '160px',
     videoId: jsPlayerVideoID,
     playerVars: {
       autoplay: 0,

@@ -1,5 +1,6 @@
 module Pages.Player exposing (..)
 
+import AnimationFrame
 import Time exposing (Time)
 import Task exposing (Task)
 import Http
@@ -7,6 +8,8 @@ import Html exposing (Html, button, div, text, fieldset, legend, span, i, img)
 import Html.Attributes exposing (disabled, id, style, src, alt)
 import Html.Events exposing (onClick)
 import Window
+import Dom
+import Dom.Scroll as Scroll
 import Types
 import Ports
 import Data.ChordTime as ChordTime exposing (ChordTime)
@@ -28,6 +31,7 @@ type alias Model =
     , transpose : Types.Transpose
     , capo : Types.Capo
     , device : Device
+    , refreshFrame : Bool
     }
 
 
@@ -40,11 +44,12 @@ init song =
     , playerStatus = Types.NotLoaded
     , playerTime = Nothing
     , playedChords = []
-    , currChord = Just ( (toFloat 1), Types.NoChord ) --Nothing
+    , currChord = Nothing
     , nextChords = Maybe.withDefault [] song.chords
     , transpose = 0
     , capo = 0
     , device = Device.classifyDevice <| Window.Size 0 0
+    , refreshFrame = True
     }
 
 
@@ -61,10 +66,13 @@ loadWithSong youTubeID =
 
 
 type Msg
-    = WindowResize Window.Size
+    = Tick Time
+    | WindowResize Window.Size
     | UpdatePlayerStatus Types.PlayerStatus
     | UpdatePlayerTime Time
+    | SeekToPosition Time
     | ControlCommand Controls
+    | ScrollingToY
 
 
 type Controls
@@ -81,6 +89,13 @@ type Step
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Tick _ ->
+            -- >> Refresh on Alternate Browser Animation Frame
+            if model.refreshFrame then
+                { model | refreshFrame = not model.refreshFrame } ! [ Ports.pushDataToJS Ports.GetPlayerCurrTime ]
+            else
+                { model | refreshFrame = not model.refreshFrame } ! []
+
         WindowResize size ->
             { model | device = Device.classifyDevice size } ! []
 
@@ -88,7 +103,55 @@ update msg model =
             { model | playerStatus = playerStatus } ! []
 
         UpdatePlayerTime playerTime ->
-            { model | playerTime = Just playerTime } ! []
+            if
+                (playerTime > ChordTime.getTime (List.head model.nextChords))
+                    && (playerTime > ChordTime.getTime model.currChord)
+            then
+                let
+                    getplayed =
+                        case model.currChord of
+                            Nothing ->
+                                []
+
+                            Just chord ->
+                                model.playedChords ++ chord :: []
+                in
+                    case model.nextChords of
+                        x :: xs ->
+                            { model | playerTime = Just playerTime, playedChords = getplayed, currChord = Just x, nextChords = xs }
+                                ! [ scrolling (List.length model.playedChords + 1) (getBlocks model.device) ]
+
+                        [] ->
+                            -- Chords ENDED
+                            { model | playerTime = Just playerTime, playedChords = [], currChord = Nothing, nextChords = getplayed }
+                                ! [ Ports.pushDataToJS <| Ports.SetPlayerState Types.Ended, scrollToTop diplayChordDomID ]
+            else
+                { model | playerTime = Just playerTime }
+                    ! []
+
+        SeekToPosition seekToTime ->
+            let
+                ( before, after ) =
+                    getAllChords model
+                        |> List.partition
+                            (\( t, _ ) -> t < seekToTime)
+
+                ( curr, next ) =
+                    case after of
+                        x :: xs ->
+                            ( Just x, xs )
+
+                        [] ->
+                            ( Nothing, [] )
+            in
+                { model
+                    | playedChords = before
+                    , currChord = curr
+                    , nextChords = next
+                }
+                    ! [ Ports.pushDataToJS <| Ports.SeekTo seekToTime
+                      , scrollToY (getScrollYPos (List.length before) (getBlocks model.device)) diplayChordDomID
+                      ]
 
         ControlCommand control ->
             case control of
@@ -100,8 +163,7 @@ update msg model =
                             , nextChords = getAllChords model
                         }
                             ! [ Ports.pushDataToJS <| Ports.SetPlayerState playerStatus
-
-                              --, scrollToTop diplayChordDomID
+                              , scrollToTop diplayChordDomID
                               ]
                     else
                         model ! [ Ports.pushDataToJS <| Ports.SetPlayerState playerStatus ]
@@ -122,12 +184,37 @@ update msg model =
                         Dec ->
                             { model | capo = model.capo - 1 } ! []
 
+        ScrollingToY ->
+            model ! []
+
+
+scrolling : Int -> Int -> Cmd Msg
+scrolling totalChordsPlayed blocks =
+    if totalChordsPlayed > blocks then
+        let
+            yPos =
+                ((totalChordsPlayed // blocks) - 1) * 52
+        in
+            scrollToY (toFloat yPos) diplayChordDomID
+    else
+        Cmd.none
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Window.resizes WindowResize
+        , playerSubscription model.playerStatus
         ]
+
+
+playerSubscription : Types.PlayerStatus -> Sub Msg
+playerSubscription playerStatus =
+    if playerStatus == Types.Playing then
+        AnimationFrame.times Tick
+        -- Time.every (Time.second * 0.1) Tick
+    else
+        Sub.none
 
 
 getWindowSize : Cmd Msg
@@ -170,7 +257,7 @@ view model =
     in
         div [ MDCClass.classList [ MDCClass.brandClass "player player-youtube-clearfix" ] ]
             [ div [ MDCClass.classList [ MDCClass.typographyHeader3 ] ] [ text model.title ]
-            , div [ MDCClass.classList [ MDCClass.brandClass "chords" ] ]
+            , div [ MDCClass.classList [ MDCClass.brandClass "chords" ], id diplayChordDomID ]
                 (displayPlayedChords ++ displayCurrChord ++ displayNextChords)
             , playerControls model
             , displayYouTubeVideo model
@@ -181,7 +268,7 @@ type alias ActiveChord =
     Bool
 
 
-displayChord : Types.Transpose -> Types.Capo -> ActiveChord -> Int -> ChordTime -> Html msg
+displayChord : Types.Transpose -> Types.Capo -> ActiveChord -> Int -> ChordTime -> Html Msg
 displayChord xpose capo active idx ( time, chord ) =
     let
         chordName =
@@ -195,6 +282,7 @@ displayChord xpose capo active idx ( time, chord ) =
             div
                 [ style [ ( "animationDelay", (toString <| getDelay idx) ++ "ms" ) ]
                 , MDCClass.classList [ MDCClass.brandClass "chord" ]
+                , onClick <| SeekToPosition time
                 ]
                 [ text chordName ]
 
@@ -286,36 +374,30 @@ displayPlayStopControl model =
 
 displayYouTubeVideo : Model -> Html Msg
 displayYouTubeVideo model =
-    if model.device.phone then
-        div [ MDCClass.classList [ MDCClass.brandClass "player-mobile-youtube" ] ]
-            [ div
-                [ id <| Types.ytPlayerIDToString model.playerID
-                , MDCClass.classList [ MDCClass.brandClass "player-mobile-youtube-video" ]
-                ]
-                [ displayYouTubeImage model.imgUrlMedium ]
-            , div [ MDCClass.classList [ MDCClass.brandClass "player-mobile-youtube-controls" ] ]
-                [ button
-                    [ MDCClass.classList [ MDCClass.button, MDCClass.buttonUnElevated, MDCClass.brandClass "ripple" ]
-                    , onClick <| playPauseMsg model.playerStatus
-                    ]
-                    [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text <| playPauseIcon model.playerStatus ]
-                    ]
-                , button
-                    [ MDCClass.classList [ MDCClass.button, MDCClass.buttonUnElevated, MDCClass.brandClass "ripple" ]
-                    , onClick (ControlCommand <| ChangePlayerStatus Types.Ended)
-                    , disabled <| not ((model.playerStatus == Types.Playing) || (model.playerStatus == Types.Paused))
-                    ]
-                    [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text "stop" ]
-                    ]
-                ]
-            ]
-    else
-        div
+    div
+        [ MDCClass.classList [ MDCClass.brandClass "player-youtube" ]
+        ]
+        [ div
             [ id <| Types.ytPlayerIDToString model.playerID
-            , MDCClass.classList [ MDCClass.brandClass "player-youtube" ]
+            , MDCClass.classList [ MDCClass.brandClass "player-youtube-video" ]
             ]
-            [ displayYouTubeImage model.imgUrlMedium
+            [ displayYouTubeImage model.imgUrlMedium ]
+        , div [ MDCClass.classList [ MDCClass.brandClass "player-youtube-controls" ] ]
+            [ button
+                [ MDCClass.classList [ MDCClass.button, MDCClass.buttonUnElevated, MDCClass.brandClass "ripple" ]
+                , onClick <| playPauseMsg model.playerStatus
+                ]
+                [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text <| playPauseIcon model.playerStatus ]
+                ]
+            , button
+                [ MDCClass.classList [ MDCClass.button, MDCClass.buttonUnElevated, MDCClass.brandClass "ripple" ]
+                , onClick (ControlCommand <| ChangePlayerStatus Types.Ended)
+                , disabled <| not ((model.playerStatus == Types.Playing) || (model.playerStatus == Types.Paused))
+                ]
+                [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text "stop" ]
+                ]
             ]
+        ]
 
 
 playPauseIcon : Types.PlayerStatus -> String
@@ -346,3 +428,48 @@ displayYouTubeImage imgUrlMedium =
         , alt "YouTube"
         ]
         []
+
+
+
+---------------------------------------------------------------------------------------------------
+-- UTILITIES
+---------------------------------------------------------------------------------------------------
+
+
+diplayChordDomID : Dom.Id
+diplayChordDomID =
+    "diplayChordID"
+
+
+getBlocks : Device -> Int
+getBlocks { tablet, phone } =
+    if phone then
+        4
+    else if tablet then
+        8
+    else
+        16
+
+
+
+---> SCROLLING
+
+
+getScrollYPos : Int -> Int -> Float
+getScrollYPos idx blocks =
+    toFloat ((idx // blocks) - 1) * 52
+
+
+scrollToTop : Dom.Id -> Cmd Msg
+scrollToTop =
+    scrollToY 0
+
+
+scrollToY : Float -> Dom.Id -> Cmd Msg
+scrollToY pos domID =
+    Scroll.toY domID pos
+        |> Task.attempt (always ScrollingToY)
+
+
+
+---------------------------------------------------------------------------------------------------

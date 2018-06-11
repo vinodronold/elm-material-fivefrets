@@ -19,6 +19,12 @@ $desktop-max: 1800px;
     }
 }
 
+@mixin phone {
+    @media (max-width: #{$phone-max}) {
+        @content;
+    }
+}
+
 @mixin tablet {
     @media (min-width: #{$phone-max + 1px}) and (max-width: #{$tablet-max}) {
         @content;
@@ -140,6 +146,8 @@ $grid-gap: 4px;
         margin: 16px 0;
         height: 5 * ($chord-height + (2 * $chord-padding) + $grid-gap);
         overflow: hidden;
+        transition: all 0.5s $mdc-animation-deceleration-curve-timing-function;
+        scroll-behavior: smooth;
         .chord {
             display: flex;
             justify-content: center;
@@ -150,11 +158,11 @@ $grid-gap: 4px;
             animation: fade-in-place 0.5s $mdc-animation-deceleration-curve-timing-function forwards;
             cursor: pointer;
             background: $mdc-theme-surface;
-            @include mdc-elevation(1); //   border: 1px solid $mdc-theme-secondary;
+            @include mdc-elevation(1);
+            transition: all 0.5s $mdc-animation-deceleration-curve-timing-function;
             &-active {
                 background: $mdc-theme-secondary;
                 color: mdc-theme-accessible-ink-color($mdc-theme-secondary);
-                @include mdc-elevation(16);
                 font-weight: bolder;
             }
             &:hover {
@@ -190,31 +198,28 @@ $grid-gap: 4px;
         left: 0;
         margin: 4px;
         @include mdc-elevation(4);
-        height: 135px;
-        width: 240px;
-        z-index: 10;
-        animation: fade-in 0.5s $mdc-animation-deceleration-curve-timing-function;
-    }
-    &-mobile-youtube {
-        display: flex;
-        position: fixed;
-        align-items: center;
-        bottom: 0;
-        left: 0;
-        right: 0;
         height: 90px;
-        width: 100%; // z-index: 1;
-        text-align: left;
-        color: mdc-theme-accessible-ink-color($mdc-theme-primary);
-        background-color: $mdc-theme-primary;
+        width: 160px; // z-index: 10;
         animation: fade-in 0.5s $mdc-animation-deceleration-curve-timing-function;
-        &-video {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        &-controls {
-            text-align: center;
+        transition: all 0.5s $mdc-animation-deceleration-curve-timing-function;
+        @include phone {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            right: 0;
+            margin: 0px;
+            height: 90px;
             width: 100%;
+            color: mdc-theme-accessible-ink-color($mdc-theme-primary);
+            background-color: $mdc-theme-primary;
+            &-video {
+                max-width: 100%;
+                max-height: 100%;
+            }
+            &-controls {
+                text-align: center;
+                width: 100%;
+            }
         }
     }
     &-image {
