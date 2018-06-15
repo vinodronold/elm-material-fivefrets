@@ -1,9 +1,13 @@
 $mdc-typography-font-family: 'Roboto Condensed',
 sans-serif;
-$mdc-theme-primary: #2e294e;
-$mdc-theme-secondary: #ffd400;
-$mdc-theme-background: #eaeaea;
-$mdc-theme-surface: #cbc5ea;
+$mdc-theme-primary: #293241;
+$mdc-theme-secondary: #f49d37;
+$mdc-theme-background: #d8d9dc;
+$mdc-theme-surface: #b1b4b9;
+// $mdc-theme-primary: #2e294e;
+// $mdc-theme-secondary: #ffd400;
+// $mdc-theme-background: #eaeaea;
+// $mdc-theme-surface: #cbc5ea;
 // $mdc-theme-primary: #1eb980;
 // $mdc-theme-secondary: #ff6859;
 // $mdc-theme-background: #33333d;
@@ -73,7 +77,6 @@ body {
         color: mdc-theme-accessible-ink-color($mdc-theme-primary);
         transition: all 1s $mdc-animation-deceleration-curve-timing-function;
         &:hover {
-            color: $mdc-theme-secondary;
             letter-spacing: 6px;
         }
     }
