@@ -5,10 +5,8 @@ module Utils.MDCClass
         , button
         , buttonDensed
         , buttonUnElevated
-        , buttonRaised
         , buttonIcon
         , icons
-        , elevate
         , elevationTransition
         , linearProgress
         , linearProgressBar
@@ -36,7 +34,10 @@ module Utils.MDCClass
         , topAppBarFixedScrolled
         , topAppBarFixedAdjust
         , topAppBarRow
+        , topAppBarActionItem
         , topAppBarSection
+        , topAppBarSectionAlignStart
+        , topAppBarSectionAlignEnd
         , topAppBarTitle
         , typography
         , typographyHeader3
@@ -322,9 +323,24 @@ topAppBarRow =
     formTopAppBarClass "__row"
 
 
+topAppBarActionItem : Class
+topAppBarActionItem =
+    formTopAppBarClass "__action-item"
+
+
 topAppBarSection : Class
 topAppBarSection =
     formTopAppBarClass "__section"
+
+
+topAppBarSectionAlignStart : Class
+topAppBarSectionAlignStart =
+    formTopAppBarClass "__section--align-start"
+
+
+topAppBarSectionAlignEnd : Class
+topAppBarSectionAlignEnd =
+    formTopAppBarClass "__section--align-end"
 
 
 topAppBarTitle : Class

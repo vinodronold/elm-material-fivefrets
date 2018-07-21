@@ -13,7 +13,6 @@ import Pages.Home as Home
 import Pages.Player as Player
 import Pages.Errored as Errored
 import Route exposing (Route)
-import Device exposing (Device)
 import Data.Songs as SongsData
 import Data.ChordTime exposing (ChordTime)
 import Ports

@@ -307,20 +307,6 @@ playerControls model =
     div [ MDCClass.classList [ MDCClass.brandClass "player-controls" ] ]
         [ displayPlayStopControl model
         , fieldset []
-            [ legend [] [ text "Transpose" ]
-            , button
-                [ MDCClass.classList [ MDCClass.button, MDCClass.buttonDensed, MDCClass.brandClass "ripple" ]
-                , onClick <| ControlCommand <| Transpose Dec
-                ]
-                [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text "remove" ] ]
-            , span [ MDCClass.classList [ MDCClass.brandClass "player-control-item" ] ] [ text <| toString model.transpose ]
-            , button
-                [ MDCClass.classList [ MDCClass.button, MDCClass.buttonDensed, MDCClass.brandClass "ripple" ]
-                , onClick <| ControlCommand <| Transpose Inc
-                ]
-                [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text "add" ] ]
-            ]
-        , fieldset []
             [ legend [] [ text "Capo" ]
             , button
                 [ MDCClass.classList [ MDCClass.button, MDCClass.buttonDensed, MDCClass.brandClass "ripple" ]
@@ -332,6 +318,20 @@ playerControls model =
             , button
                 [ MDCClass.classList [ MDCClass.button, MDCClass.buttonDensed, MDCClass.brandClass "ripple" ]
                 , onClick <| ControlCommand <| Capo Inc
+                ]
+                [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text "add" ] ]
+            ]
+        , fieldset []
+            [ legend [] [ text "Transpose" ]
+            , button
+                [ MDCClass.classList [ MDCClass.button, MDCClass.buttonDensed, MDCClass.brandClass "ripple" ]
+                , onClick <| ControlCommand <| Transpose Dec
+                ]
+                [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text "remove" ] ]
+            , span [ MDCClass.classList [ MDCClass.brandClass "player-control-item" ] ] [ text <| toString model.transpose ]
+            , button
+                [ MDCClass.classList [ MDCClass.button, MDCClass.buttonDensed, MDCClass.brandClass "ripple" ]
+                , onClick <| ControlCommand <| Transpose Inc
                 ]
                 [ i [ MDCClass.classList [ MDCClass.icons ] ] [ text "add" ] ]
             ]

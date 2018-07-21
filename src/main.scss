@@ -73,12 +73,14 @@ body {
         letter-spacing: 4px;
         font-feature-settings: 'liga' 0;
         width: 100%;
-        text-align: center;
-        color: mdc-theme-accessible-ink-color($mdc-theme-primary);
         transition: all 1s $mdc-animation-deceleration-curve-timing-function;
+        color: mdc-theme-accessible-ink-color($mdc-theme-primary);
         &:hover {
             letter-spacing: 6px;
         }
+    }
+    .actions {
+        font-size: 36px;
     }
 }
 
@@ -88,7 +90,7 @@ body {
         width: 90%;
     }
     @include desktop {
-        width: 80%;
+        width: 70%;
     }
 }
 
@@ -104,9 +106,9 @@ body {
 }
 
 .song {
-    height: auto;
+    height: 50px;
     margin: 10px 0;
-    padding: 0;
+    padding: 5px;
     cursor: pointer;
     opacity: 0;
     will-change: opacity;
@@ -121,11 +123,12 @@ body {
         @include tablet-and-above {
             @include mdc-typography(body1);
         }
+        padding-left: 16px;
     }
     .youtube-image {
         width: auto;
-        height: auto;
-        transform: scale(0.75);
+        height: 50px; // transform: scale(0.75);
+        border-radius: 4px;
     }
 }
 

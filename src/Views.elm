@@ -1,6 +1,6 @@
 module Views exposing (frame, loading, listSongs)
 
-import Html exposing (Html, a, div, header, img, main_, text, section, span, ul, li)
+import Html exposing (Html, a, button, div, header, i, img, main_, text, section, span, ul, li)
 import Html.Attributes exposing (alt, attribute, href, src, style)
 import Data.Songs as Data
 import Utils.MDCClass as MDCClass
@@ -22,12 +22,19 @@ topBar =
         ]
         [ div
             [ MDCClass.classList [ MDCClass.topAppBarRow ] ]
-            [ section [ MDCClass.classList [ MDCClass.topAppBarSection ] ]
+            [ section [ MDCClass.classList [ MDCClass.topAppBarSection, MDCClass.topAppBarSectionAlignStart ] ]
                 [ a
                     [ href (Route.href <| Route.Home)
                     , MDCClass.classList [ MDCClass.topAppBarTitle, MDCClass.brandClass "fivefrets" ]
                     ]
                     [ text "fivefrets" ]
+                ]
+            , section [ MDCClass.classList [ MDCClass.topAppBarSection, MDCClass.topAppBarSectionAlignEnd ] ]
+                [ a
+                    [ href "#"
+                    , MDCClass.classList [ MDCClass.icons, MDCClass.topAppBarActionItem, MDCClass.brandClass "actions ripple" ]
+                    ]
+                    [ text "more_vert" ]
                 ]
             ]
         ]
